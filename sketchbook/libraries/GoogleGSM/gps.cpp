@@ -51,9 +51,9 @@ char GPSGSM::getBattTVol(char *str_vol){
 
 char GPSGSM::attachGPS() 
 {
-	if(AT_RESP_ERR_DIF_RESP == gsm.SendATCmdWaitResp("AT+CGPSPWR=1", 500, 100, "OK", 5))
+	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CGPSPWR=1", 500, 100, "OK", 5))
 		return 0;
-	if(AT_RESP_ERR_DIF_RESP == gsm.SendATCmdWaitResp("AT+CGPSRST=1", 500, 100, "OK", 5))
+	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CGPSRST=1", 500, 100, "OK", 5))
 		return 0;
 	return 1;
 }

@@ -49,7 +49,7 @@ char SMSGSM::SendSMS(char *number_str, char *message_str)
 	#endif
     // 1000 msec. for initial comm tmout
     // 50 msec. for inter character timeout
-    if (RX_FINISHED_STR_RECV == gsm.WaitResp(1000, 500, ">")) {
+    if (RX_FINISHED_STR_RECV == gsm.WaitResp(2000, 1000, ">")) {
 		#ifdef DEBUG_ON
 			Serial.println("DEBUG:>");
 		#endif

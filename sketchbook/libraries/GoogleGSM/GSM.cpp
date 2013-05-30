@@ -42,7 +42,40 @@ GSM::GSM(){
 };
 #endif
 
+int GSM::begin(long baud_rate){
 
+	boolean norep=false;
+	boolean turnedON=false;
+
+	SetCommLineStatus(CLS_ATCMD);
+	pinMode(GSM_PIN,OUTPUT);//The default digital driver pins for the GSM and GPS mode
+	pinMode(GPS_PIN,OUTPUT);
+	pinMode(GSM_ON,OUTPUT);
+
+	powerToggle();
+	serialMode(GSM_MODE);
+
+	if (AT_RESP_OK == SendATCmdWaitResp("AT", 500, 100, "OK", 15)){
+		#ifdef DEBUG_ON
+			Serial.println("DB:CORRECT BR");
+		#endif
+		turnedON=true;
+		norep=false;
+	}
+
+	if(turnedON){
+		WaitResp(50, 50);
+		//InitParam(PARAM_SET_0);
+		//InitParam(PARAM_SET_1);//configure the module  
+		Echo(0);               //enable AT echo
+		setStatus(READY);
+		return(1);
+	}else
+		return 0;
+}
+
+
+#if 0
 int GSM::begin(long baud_rate){
 	int response=-1;
 	int cont=0;
@@ -244,6 +277,7 @@ int GSM::begin(long baud_rate){
 		return(0);
 	}
 }
+#endif
 
 void GSM::powerToggle() {
 	digitalWrite(GSM_ON, HIGH);

@@ -6,7 +6,7 @@
 #include "gps.h"
 
 #define HAVESENSOR
-
+#define ID "00001"
 #define DHT11PIN 7
 #define SETCMD "SET+"
 #define SETALARMCENTERCMD "SET+AC"
@@ -60,7 +60,7 @@ void setup()
   //Serial connection.
   Serial.begin(9600);
   //delay(1000);
-  Serial.println("GSM Shield testing v4.");
+  Serial.println("GSM Shield testing v5.");
   delay(1000);
   //Start configuration of shield with baudrate.
   //For http uses is raccomanded to use 4800 or slower.
@@ -263,21 +263,23 @@ void checkalarm()
  char str[20];
  boolean alarm=false;
 
-  strcpy(result,"alarm=");
+  strcpy(result,"alarm=");  
+  strcat(result, "ID:");
+  strcat(result,ID);
  ADXL335read();
  int xang = ADXL335xAng();
  int yang = ADXL335yAng();
  if (xang>xmax){ 	
 	 itoa(xang,str,10);
-	 strcat(result, "XAngle:");
+	 strcat(result, ",XAngle:");
 	 strcat(result,str);
  	 alarm=true;
  }
  if (yang>ymax){
 	 itoa(yang,str,10);
-         if (alarm)
-           strcat(result,",");
-	 strcat(result, "YAngle:");
+         //if (alarm)
+          // strcat(result,",");
+	 strcat(result, ",YAngle:");
 	 strcat(result,str);
  	 alarm=true;
  }
@@ -287,17 +289,17 @@ void checkalarm()
  int humidity = dht.humidity;  
  if (temp>tempmax){	
 	 itoa(temp,str,10);
-         if (alarm)
-           strcat(result,",");
-	 strcat(result, "Temp:");
+         //if (alarm)
+          // strcat(result,",");
+	 strcat(result, ",Temp:");
 	 strcat(result,str);
  	 alarm=true;
  }
  if (humidity>humax){
 	 itoa(humidity,str,10);
-         if (alarm)
-           strcat(result,",");
-	 strcat(result, "Humidity:");
+         //if (alarm)
+          // strcat(result,",");
+	 strcat(result, ",Humidity:");
 	 strcat(result,str);
  	 alarm=true;
  }
@@ -324,10 +326,13 @@ char *getresult()
 {
   char str[20];
   strcpy(result,"info=");
+  
+  strcat(result, "ID:");
+  strcat(result,ID);
 
   if (true == gsm.getCellID(str,20))
   {
-	strcat(result, "Cellid:");
+	strcat(result, ",Cellid:");
  	strcat(result,str);
   }
   else
