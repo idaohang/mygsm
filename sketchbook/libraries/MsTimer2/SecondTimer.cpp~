@@ -1,0 +1,16 @@
+#include "MsTimer2.h"
+#include "SecondTimer.h"
+
+SecondTimer::SecondTimer()
+{
+}
+
+SecondTimer::set(int seconds, void (*f)())
+{
+
+}
+
+SecondTimer::stop()
+{
+
+}
