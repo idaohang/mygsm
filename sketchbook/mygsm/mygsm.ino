@@ -102,6 +102,11 @@ void setup()
 void loop() 
 {
   if(started){
+  	gsm.CellID();
+  	#ifdef HAVESENSOR
+  	ADXL335read();
+  	dht.read();
+  	#endif
 	checkalarm();  
 	gps.getPar(lon,lat,alt,time,vel);
         if (reporton)
@@ -266,7 +271,7 @@ void checkalarm()
   strcpy(result,"alarm=");  
   strcat(result, "ID:");
   strcat(result,ID);
- ADXL335read();
+ //ADXL335read();
  int xang = ADXL335xAng();
  int yang = ADXL335yAng();
  if (xang>xmax){ 	
@@ -284,7 +289,7 @@ void checkalarm()
  	 alarm=true;
  }
  
- dht.read();
+ //dht.read();
  int temp = dht.temperature;
  int humidity = dht.humidity;  
  if (temp>tempmax){	
@@ -330,7 +335,7 @@ char *getresult()
   strcat(result, "ID:");
   strcat(result,ID);
 
-  if (true == gsm.getCellID(str,20))
+  /*if (true == gsm.getCellID(str,20))
   {
 	strcat(result, ",Cellid:");
  	strcat(result,str);
@@ -339,7 +344,9 @@ char *getresult()
   {
 	strcat(result, "Cellid:");
  	strcat(result,"null");
-  }
+  }*/
+  strcat(result, ",Cellid:");
+  strcat(result,gsm.getCellID());
 
   strcat(result,",Lon:");
   strcat(result,lon);
@@ -347,7 +354,7 @@ char *getresult()
   strcat(result,lat);
 
   #ifdef HAVESENSOR
-  ADXL335read();
+  //ADXL335read();
  int xang = ADXL335xAng();
  int yang = ADXL335yAng();
  itoa(xang,str,10);
@@ -357,7 +364,7 @@ char *getresult()
  itoa(yang,str,10);
  strcat(result,str);
  
- dht.read();
+ //dht.read();
  int temp = dht.temperature;
  int humidity = dht.humidity; 
  strcat(result, ",Temp:");

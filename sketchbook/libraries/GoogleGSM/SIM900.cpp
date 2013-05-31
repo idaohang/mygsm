@@ -8,7 +8,7 @@
 //#define RESETPIN 7
 
 SIMCOM900 gsm;
-SIMCOM900::SIMCOM900(){};
+SIMCOM900::SIMCOM900(){curCellid[0]=0;};
 SIMCOM900::~SIMCOM900(){};
  
 char SIMCOM900::forceON(){
@@ -336,7 +336,13 @@ int SIMCOM900::getIMEI(char *imei)
     return 1;
 }
 
-boolean SIMCOM900::getCellID(char *cellid, int nlength)
+char *SIMCOM900::getCellID()
+{
+	return curCellid;
+}
+
+
+void SIMCOM900::CellID()
 {
   char *p_char; 
 	char *p_char1;
@@ -348,13 +354,14 @@ boolean SIMCOM900::getCellID(char *cellid, int nlength)
 	p_char = strchr((char *)(p_char1), '\"');
 	if (p_char != NULL) {
           *p_char = 0; 
-		strcpy(cellid, (char *)(p_char1));	
-	    return true;
-    }else
-    	return false;
+		//strcpy(cellid, (char *)(p_char1));	
+		strcpy(curCellid,(char *)(p_char1));
+	   // return true;
+    }//else
+    	//return false;
   }
-  else  
-    return false;
+  //else  
+    //return false;
 }
 
 uint8_t SIMCOM900::read()

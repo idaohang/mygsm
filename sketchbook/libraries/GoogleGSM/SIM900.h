@@ -11,13 +11,15 @@ class SIMCOM900 : public virtual GSM
     int configandwait(char* pin);
     int setPIN(char *pin);
     int changeNSIPmode(char);
+	char curCellid[8];
 
   public:
     SIMCOM900();
     ~SIMCOM900();
     int getCCI(char* cci);
 	int getIMEI(char* imei);
-	boolean getCellID(char* cellid, int nlength);
+	char* getCellID();
+	void CellID();
     int sendSMS(const char* to, const char* msg);
     boolean readSMS(char* msg, int msglength, char* number, int nlength);
     boolean readCall(char* number, int nlength);
