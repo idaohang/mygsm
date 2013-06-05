@@ -10,6 +10,7 @@ class GPSGSM
 		char getBattTVol(char *str_vol);
 		char attachGPS();
 		char deattachGPS();
+		void checkPwr();
 		char getStat();
 		char getPar(char *str_long, char *str_lat, char *str_alt, char *str_time, char *speed);
 };

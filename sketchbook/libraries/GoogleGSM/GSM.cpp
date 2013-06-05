@@ -41,7 +41,7 @@ GSM::GSM(){
 	_cell.begin(9600);
 };
 #endif
-
+#if 0
 int GSM::begin(long baud_rate){
 
 	boolean norep=false;
@@ -75,7 +75,7 @@ int GSM::begin(long baud_rate){
 }
 
 
-#if 0
+#else
 int GSM::begin(long baud_rate){
 	int response=-1;
 	int cont=0;

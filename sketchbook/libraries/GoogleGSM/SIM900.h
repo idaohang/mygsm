@@ -18,6 +18,7 @@ class SIMCOM900 : public virtual GSM
     ~SIMCOM900();
     int getCCI(char* cci);
 	int getIMEI(char* imei);
+	char *getAllCellInfo(char *res,int length);
 	char* getCellID();
 	void CellID();
     int sendSMS(const char* to, const char* msg);

@@ -15,6 +15,7 @@ class SMSGSM
     char GetAuthorizedSMS(byte position, char *phone_number, char *SMS_text, byte max_SMS_len,
                           byte first_authorized_pos, byte last_authorized_pos);
     char DeleteSMS(byte position);
+	void DeleteAllSMS();
 
 };
 

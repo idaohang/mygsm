@@ -51,9 +51,9 @@ char GPSGSM::getBattTVol(char *str_vol){
 
 char GPSGSM::attachGPS() 
 {
-	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CGPSPWR=1", 500, 100, "OK", 5))
+	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CGPSPWR=1", 2000, 500, "OK", 5))
 		return 0;
-	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CGPSRST=1", 500, 100, "OK", 5))
+	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CGPSRST=1", 2000, 500, "OK", 5))
 		return 0;
 	return 1;
 }
@@ -65,11 +65,23 @@ char GPSGSM::deattachGPS()
 	return 1;
 }
 
+void GPSGSM::checkPwr()
+{
+	gsm.SimpleWriteln("AT+CGPSPWR?");
+	gsm.WaitResp(5000, 500, "OK");
+	if (!gsm.IsStringReceived("+CGPSPWR=1"))
+		attachGPS();
+	gsm.SimpleWriteln("AT+CGPSRST?");
+	gsm.WaitResp(5000, 500, "OK");
+	if (!gsm.IsStringReceived("+CGPSRST=1"))
+		attachGPS();
+}
+
 char GPSGSM::getStat() 
 {
 	char ret_val=-1;
 	gsm.SimpleWriteln("AT+CGPSSTATUS?");
-	gsm.WaitResp(5000, 100, "OK");
+	gsm.WaitResp(1000, 500, "OK");
 	if(gsm.IsStringReceived("Unknown")||gsm.IsStringReceived("unknown"))
 		ret_val=0;
 	else if(gsm.IsStringReceived("Not"))
@@ -87,7 +99,7 @@ char GPSGSM::getPar(char *str_long, char *str_lat, char *str_alt, char *str_time
 	char *p_char; 
 	char *p_char1;
 	gsm.SimpleWriteln("AT+CGPSINF=0");
-	gsm.WaitResp(5000, 100, "OK");
+	gsm.WaitResp(2000, 100, "OK");
 	if(gsm.IsStringReceived("OK"))
 		ret_val=1;
 		

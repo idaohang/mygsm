@@ -8,21 +8,22 @@
 #define HAVESENSOR
 #define ID "00001"
 #define DHT11PIN 7
+#define SWITCHPIN 2
 #define SETCMD "SET+"
 #define SETALARMCENTERCMD "SET+AC"
 #define SETALARMTEMPCMD "SET+AT"
 #define SETALARMHUCMD "SET+AH"
 #define SETALARMXCMD "SET+AX"
 #define SETALARMYCMD "SET+AY"
-//#define SETALARMPERIODCMD "SET+AP"
-#define SETEREPORTPERIODCMD "SET+RP"
+#define SETALARMPERIODCMD "SET+AP"
+//#define SETEREPORTPERIODCMD "SET+RP"
 
 int tempmax=35;
 int humax = 95;
 int xmax=45;
 int ymax=45;
-int reporttime=2;  //minutes
-int alarmtime=2; //seconds
+int reporttime=5;  //minutes
+//int alarmtime=2; //seconds
 
 char alarmcenter[20];
 
@@ -56,11 +57,12 @@ char result[200];
 
 void setup() 
 { 
+  pinMode(SWITCHPIN,INPUT);
   strcpy(alarmcenter,"13715125676");
   //Serial connection.
   Serial.begin(9600);
   //delay(1000);
-  Serial.println("GSM Shield testing v5.");
+  Serial.println("GSM Shield testing v6.");
   delay(1000);
   //Start configuration of shield with baudrate.
   //For http uses is raccomanded to use 4800 or slower.
@@ -77,8 +79,8 @@ void setup()
     else 
     	Serial.println("status=GPSERROR");
 	
-    delay(20000);	//Time for fixing
-    stat=gps.getStat();
+    delay(5000);	//Time for fixing
+   /* stat=gps.getStat();
 	if(stat==1)
 		Serial.println("NOT FIXED");
 	else if(stat==0)
@@ -94,21 +96,33 @@ void setup()
 	Serial.println(lat);
 	Serial.println(alt);
 	Serial.println(time);
-	Serial.println(vel);
+	Serial.println(vel);*/
+  sms.DeleteAllSMS();
   mtimer.set(reporttime,timerIsr);
   mtimer.start();
 };
-
+//char cellinfo[20];
 void loop() 
 {
+  //char cellinfo[20];
   if(started){
-  	gsm.CellID();
+        //gsm.getAllCellInfo(cellinfo,20);
+        
+        //Serial.println(cellinfo);
+        //Serial.flush();
+        
+  	//gsm.CellID();
+  	//gps.checkPwr();
   	#ifdef HAVESENSOR
-  	ADXL335read();
-  	dht.read();
+  	//ADXL335read();
+  	//dht.read();
   	#endif
 	checkalarm();  
-	gps.getPar(lon,lat,alt,time,vel);
+        //stat=gps.getStat();
+        //if (stat == 2 || stat == 3)
+	  //gps.getPar(lon,lat,alt,time,vel);
+        //else
+        // ;// reporton = false;
         if (reporton)
         {
           reporton=false; 
@@ -144,7 +158,9 @@ void loop()
                 debug("ERROR","SendSMS fail");
           }          
         }
-    delay(alarmtime*1000);
+    //delay(alarmtime*1000);
+    delay(100);
+    //delay(5000);
   }
 }
 
@@ -230,12 +246,12 @@ int processsms(char *sms)
                                 strcat(result," OK");
                                 ret=1;
 			}
-		}else if (0 == strncasecmp(sms, SETEREPORTPERIODCMD,6))
+		}else if (0 == strncasecmp(sms, SETALARMPERIODCMD,6))
 		{
 			v=getvalue(sms);
 			if (v) {
 				reporttime=v;
-				Serial.println(SETEREPORTPERIODCMD);
+				Serial.println(SETALARMPERIODCMD);
 				Serial.println(reporttime);
 				Serial.println("OK");
                                 strcpy(result,sms);
@@ -245,19 +261,7 @@ int processsms(char *sms)
                                 mtimer.start();
                                 ret=1;
 			}
-		}/*else if (0 == strncasecmp(sms, SETALARMPERIODCMD,6))
-		{
-			v=getvalue(sms);
-			if (v) {
-				alarmtime=v;
-				Serial.println(SETALARMPERIODCMD);
-				Serial.println(alarmtime);
-				Serial.println("OK");
-                                strcpy(result,sms);
-                                strcat(result," OK");
-                                ret=1;
-			}
-		}*/
+		}
 	}
         return ret;
 }
@@ -271,7 +275,11 @@ void checkalarm()
   strcpy(result,"alarm=");  
   strcat(result, "ID:");
   strcat(result,ID);
- //ADXL335read();
+  if (digitalRead(SWITCHPIN)==HIGH){
+   strcat(result,",Switch ON"); 
+   alarm=true;
+  }
+ ADXL335read();
  int xang = ADXL335xAng();
  int yang = ADXL335yAng();
  if (xang>xmax){ 	
@@ -289,7 +297,7 @@ void checkalarm()
  	 alarm=true;
  }
  
- //dht.read();
+ dht.read();
  int temp = dht.temperature;
  int humidity = dht.humidity;  
  if (temp>tempmax){	
@@ -308,7 +316,8 @@ void checkalarm()
 	 strcat(result,str);
  	 alarm=true;
  }
- 
+ //strcat(result,",cell:");
+ //strcat(result,cellinfo);
  if (alarm){
  	if (1!=sms.SendSMS(alarmcenter, result))
   	{
@@ -345,16 +354,27 @@ char *getresult()
 	strcat(result, "Cellid:");
  	strcat(result,"null");
   }*/
-  strcat(result, ",Cellid:");
-  strcat(result,gsm.getCellID());
-
-  strcat(result,",Lon:");
-  strcat(result,lon);
-  strcat(result,",Lat:");
-  strcat(result,lat);
+  char cellinfo[20];
+  //gsm.CellID();
+  if (gsm.getAllCellInfo(cellinfo,20)){
+    strcat(result, ",Cellid:");
+    strcat(result,cellinfo);
+  }
+  stat=gps.getStat();
+  if (stat == 2 || stat == 3){
+    gps.getPar(lon,lat,alt,time,vel);
+    strcat(result,",Lon:");
+    strcat(result,lon);
+    strcat(result,",Lat:");
+    strcat(result,lat);
+  }
+  else{
+    strcat(result,",Lon:0.00");
+    strcat(result,",Lat:0.00");
+  }
 
   #ifdef HAVESENSOR
-  //ADXL335read();
+ ADXL335read();
  int xang = ADXL335xAng();
  int yang = ADXL335yAng();
  itoa(xang,str,10);
@@ -364,7 +384,7 @@ char *getresult()
  itoa(yang,str,10);
  strcat(result,str);
  
- //dht.read();
+ dht.read();
  int temp = dht.temperature;
  int humidity = dht.humidity; 
  strcat(result, ",Temp:");

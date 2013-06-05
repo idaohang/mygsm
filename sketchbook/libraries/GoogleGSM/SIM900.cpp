@@ -93,6 +93,46 @@ int SIMCOM900::read(char* result, int resultlength)
   return i;
 }
 
+char *SIMCOM900::getAllCellInfo(char *res,int length)
+{
+	char *p_char; 
+	char *p_char1;
+	if (getStatus()==IDLE)
+    return 0;
+    SimpleWriteln(F("AT+CENG=3")); 
+	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CENG=3", 2000, 500, "OK", 1))
+		return 0;
+	if(AT_RESP_OK != gsm.SendATCmdWaitResp("AT+CENG?", 2000, 500, "+CENG", 1))
+		return 0;
+	p_char=strstr((char *)(gsm.comm_buf),"+CENG:0,");
+	//Serial.println(p_char);
+	//SimpleWriteln(p_char),
+	p_char1=p_char+8;	
+	p_char = strchr((char *)(p_char1), ',');
+	if (p_char != NULL) {
+          *p_char = 0; 
+		//strcpy(cellid, (char *)(p_char1));	
+		//SimpleWriteln(p_char1);
+		strcpy(res,(char *)(p_char1));
+	   // return true;
+    }
+	for(int i=0;i<3;i++){
+	    strcat(res,"-");
+		p_char1=p_char+1;
+		p_char = strchr((char*)p_char1,',');
+		if (p_char != NULL){
+			*p_char = 0;
+			//SimpleWriteln(p_char1);
+			strcat(res, (char *)(p_char1));
+		}
+	}
+	//Serial.println(res);
+
+	SimpleWriteln(F("AT+CENG=0,0")); 
+  	gsm.WaitResp(5000, 50, "+OK");
+	return res;
+}
+
  int SIMCOM900::readCellData(int &mcc, int &mnc, long &lac, long &cellid)
 {
   if (getStatus()==IDLE)
@@ -100,9 +140,9 @@ int SIMCOM900::read(char* result, int resultlength)
     
    //_tf.setTimeout(_GSM_DATA_TOUT_);
    //_cell.flush();
-  SimpleWriteln(F("AT+QENG=1,0")); 
-  SimpleWriteln(F("AT+QENG?")); 
-  if(gsm.WaitResp(5000, 50, "+QENG")!=RX_FINISHED_STR_NOT_RECV)
+  SimpleWriteln(F("AT+CENG=3")); 
+  SimpleWriteln(F("AT+CENG?")); 
+  if(gsm.WaitResp(5000, 50, "+CENG")!=RX_FINISHED_STR_NOT_RECV)
     return 0;
 
   //mcc=_tf.getValue(); // The first one is 0
@@ -117,7 +157,7 @@ int SIMCOM900::read(char* result, int resultlength)
   cellid=_cell.read();
   
   gsm.WaitResp(5000, 50, "+OK");
-  SimpleWriteln(F("AT+QENG=1,0")); 
+  SimpleWriteln(F("AT+CENG=0,0")); 
   gsm.WaitResp(5000, 50, "+OK");
   return 1;
 }
@@ -425,9 +465,9 @@ void SIMCOM900::WhileSimpleRead()
 	char datain;
 	while(_cell.available()>0){
 		datain=_cell.read();
-		if(datain>0){
-			Serial.print(datain);
-		}
+		//if(datain>0){
+			//Serial.print(datain);
+		//}
 	}
 }
 

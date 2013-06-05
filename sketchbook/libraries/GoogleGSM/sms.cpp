@@ -36,6 +36,7 @@ char SMSGSM::SendSMS(char *number_str, char *message_str)
   gsm.SetCommLineStatus(CLS_ATCMD);  
   ret_val = 0; // still not send
 */
+  gsm.WhileSimpleRead();
   // try to send SMS 3 times in case there is some problem
   for (i = 0; i < 3; i++) {
     // send  AT+CMGS="number_str"
@@ -49,7 +50,7 @@ char SMSGSM::SendSMS(char *number_str, char *message_str)
 	#endif
     // 1000 msec. for initial comm tmout
     // 50 msec. for inter character timeout
-    if (RX_FINISHED_STR_RECV == gsm.WaitResp(2000, 1000, ">")) {
+    if (RX_FINISHED_STR_RECV == gsm.WaitResp(5000, 2000, ">")) {
 		#ifdef DEBUG_ON
 			Serial.println("DEBUG:>");
 		#endif
@@ -564,5 +565,10 @@ char SMSGSM::DeleteSMS(byte position)
 
   gsm.SetCommLineStatus(CLS_FREE);
   return (ret_val);
+}
+
+
+void SMSGSM::DeleteAllSMS(){
+	gsm.SendATCmdWaitResp("AT+CMGDA=\"DEL ALL\"", 2000, 2000, "OK", 5);
 }
 
