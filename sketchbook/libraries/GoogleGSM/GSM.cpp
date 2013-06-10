@@ -595,6 +595,9 @@ byte GSM::IsRxFinished(void)
 		*/
       comm_buf[comm_buf_len] = 0x00;  // for sure finish string again
                                       // but it is not necessary
+                                      
+	  //_cell.println((char*)comm_buf);
+	  //_cell.flush();
       ret_val = RX_FINISHED;
     }
   }

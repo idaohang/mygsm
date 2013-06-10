@@ -62,7 +62,7 @@ void setup()
   //Serial connection.
   Serial.begin(9600);
   //delay(1000);
-  Serial.println("GSM Shield testing v6.");
+  Serial.println("GSM Shield testing v7.");
   delay(1000);
   //Start configuration of shield with baudrate.
   //For http uses is raccomanded to use 4800 or slower.
@@ -153,13 +153,18 @@ void loop()
                   debug("ERROR","SendSMS fail");
             }
           }
-          else if (1!=sms.SendSMS(phone_num,getresult()))
-          {
-                debug("ERROR","SendSMS fail");
-          }          
+          else{
+          	   if (0==strncmp(phone_num, "100",3)){
+
+          	   }
+	          else if (1!=sms.SendSMS(phone_num,getresult("get ")))
+	          {
+	                debug("ERROR","SendSMS fail");
+	          } 
+          }
         }
     //delay(alarmtime*1000);
-    delay(100);
+    delay(1000);
     //delay(5000);
   }
 }
@@ -328,18 +333,25 @@ void checkalarm()
 #endif
 }
 
+
 void report() 
 {
-  if (1!=sms.SendSMS(alarmcenter, getresult()))
+  if (1!=sms.SendSMS(alarmcenter, getresult("report ")))
   {
           debug("ERROR","Send report fail");
   }
 }
 
-char *getresult()
+char *getresult(char *tag)
 {
   char str[20];
-  strcpy(result,"info=");
+  if (tag != NULL){
+	strcpy(result, tag);
+	strcat(result, "info=");
+  }
+  else{
+  	strcpy(result,"info=");
+  }
   
   strcat(result, "ID:");
   strcat(result,ID);

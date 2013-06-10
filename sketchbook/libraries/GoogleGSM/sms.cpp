@@ -166,6 +166,7 @@ char SMSGSM::IsSMSPresent(byte required_status)
   char *p_char;
   byte status;
 
+  gsm.WhileSimpleRead();
   if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
   gsm.SetCommLineStatus(CLS_ATCMD);
   ret_val = 0; // still not present
@@ -232,7 +233,7 @@ char SMSGSM::IsSMSPresent(byte required_status)
 
       // here we have gsm.WaitResp() just for generation tmout 20msec. in case OK was detected
       // not due to receiving
-      gsm.WaitResp(20, 20); 
+      gsm.WaitResp(1000, 1000); 
       break;
   }
 
@@ -290,6 +291,8 @@ char SMSGSM::GetSMS(byte position, char *phone_number, char *SMS_text, byte max_
   char *p_char1;
   byte len;
 
+  gsm.WhileSimpleRead();
+
   if (position == 0) return (-3);
   if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
   gsm.SetCommLineStatus(CLS_ATCMD);
@@ -302,7 +305,7 @@ char SMSGSM::GetSMS(byte position, char *phone_number, char *SMS_text, byte max_
 
   // 5000 msec. for initial comm tmout
   // 100 msec. for inter character tmout
-  switch (gsm.WaitResp(5000, 100, "+CMGR")) {
+  switch (gsm.WaitResp(5000, 2000, "+CMGR")) {
     case RX_TMOUT_ERR:
       // response was not received in specific time
       ret_val = -2;
@@ -534,6 +537,7 @@ char SMSGSM::DeleteSMS(byte position)
 {
   char ret_val = -1;
 
+  gsm.WhileSimpleRead();
   if (position == 0) return (-3);
   if (CLS_FREE != gsm.GetCommLineStatus()) return (ret_val);
   gsm.SetCommLineStatus(CLS_ATCMD);
@@ -546,7 +550,7 @@ char SMSGSM::DeleteSMS(byte position)
 
   // 5000 msec. for initial comm tmout
   // 20 msec. for inter character timeout
-  switch (gsm.WaitResp(5000, 50, "OK")) {
+  switch (gsm.WaitResp(5000, 1000, "OK")) {
     case RX_TMOUT_ERR:
       // response was not received in specific time
       ret_val = -2;
