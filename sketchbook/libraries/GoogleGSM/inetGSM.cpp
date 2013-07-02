@@ -3,6 +3,8 @@
 #define _TCP_CONNECTION_TOUT_ 20
 #define _GSM_DATA_TOUT_ 10
 
+#define DEBUG_ON
+
 int InetGSM::httpGET(const char* server, int port, const char* path, char* result, int resultlength)
 {
   boolean connected=false;
@@ -317,7 +319,7 @@ int InetGSM::attachGPRS(char* domain, char* dom1, char* dom2)
   
   gsm.SimpleWriteln("AT+CIPSHUT");
   
-  switch(gsm.WaitResp(500, 50, "SHUT OK")){
+  switch(gsm.WaitResp(1000, 50, "SHUT OK")){
 
 	case RX_TMOUT_ERR: 
 		return 0;
@@ -340,7 +342,7 @@ int InetGSM::attachGPRS(char* domain, char* dom1, char* dom2)
   gsm.SimpleWrite("\"\r");  
 
   
-  switch(gsm.WaitResp(500, 50, "OK")){
+  switch(gsm.WaitResp(1000, 50, "OK")){
 
 	case RX_TMOUT_ERR: 
 		return 0;
@@ -467,7 +469,7 @@ int InetGSM::connectTCP(const char* server, int port)
   }
 
   #ifdef DEBUG_ON
-	Serial.println("DB:>");
+	//Serial.println("DB:>");
   #endif
   delay(4000);
   return 1;

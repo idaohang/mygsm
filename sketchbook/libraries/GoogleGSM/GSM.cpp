@@ -95,7 +95,7 @@ int GSM::begin(long baud_rate){
 	
 	
 	for (cont=0; cont<3; cont++){
-		if (AT_RESP_ERR_NO_RESP == SendATCmdWaitResp("AT", 500, 100, "OK", 5)&&!turnedON) {		//check power
+		if (AT_RESP_ERR_NO_RESP == SendATCmdWaitResp("AT", 2500, 1000, "OK", 5)&&!turnedON) {		//check power
 	    // there is no response => turn on the module
 			#ifdef DEBUG_ON
 				Serial.println("DB:NO RESP");
@@ -116,7 +116,7 @@ int GSM::begin(long baud_rate){
 		}
 	}
 	
-	if (AT_RESP_OK == SendATCmdWaitResp("AT", 500, 100, "OK", 5)){
+	if (AT_RESP_OK == SendATCmdWaitResp("AT", 2500, 1000, "OK", 5)){
 		#ifdef DEBUG_ON
 			Serial.println("DB:CORRECT BR");
 		#endif
@@ -173,7 +173,7 @@ int GSM::begin(long baud_rate){
 	}*/
 
 
-	if (AT_RESP_ERR_DIF_RESP == SendATCmdWaitResp("AT", 500, 100, "OK", 5)&&!turnedON){		//check OK
+	if (AT_RESP_ERR_DIF_RESP == SendATCmdWaitResp("AT", 2500, 1000, "OK", 5)&&!turnedON){		//check OK
 		#ifdef DEBUG_ON
 			Serial.println("DB:DIFF RESP");
 		#endif
@@ -228,7 +228,7 @@ int GSM::begin(long baud_rate){
 			#endif
 				
 
-			if (AT_RESP_OK == SendATCmdWaitResp("AT", 500, 100, "OK", 5)){
+			if (AT_RESP_OK == SendATCmdWaitResp("AT", 2500, 1000, "OK", 5)){
 				#ifdef DEBUG_ON
 					Serial.println("DB:FOUND PREV BR");
 				#endif
@@ -238,7 +238,7 @@ int GSM::begin(long baud_rate){
 				delay(500);
 				_cell.begin(baud_rate);
 				delay(100);
-				if (AT_RESP_OK == SendATCmdWaitResp("AT", 500, 100, "OK", 5)){
+				if (AT_RESP_OK == SendATCmdWaitResp("AT", 2500, 1000, "OK", 5)){
 					#ifdef DEBUG_ON
 						Serial.println("DB:OK BR");
 					#endif

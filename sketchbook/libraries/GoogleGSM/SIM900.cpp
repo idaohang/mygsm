@@ -80,17 +80,31 @@ int SIMCOM900::configandwait(char* pin)
 }
 
 int SIMCOM900::read(char* result, int resultlength)
-{
+{/*
 	char temp;
 	int i=0;
 	for(i=0; i<resultlength;i++){
 		temp=gsm.read();
 		if(temp>0){
-			Serial.print(temp);
+			//Serial.print(temp);
 			result[i]=temp;
 		}
+		else
+			Serial.print('a');
 	}
-  return i;
+  return i;*/
+  	gsm.WaitResp(5000,1000);
+	if (gsm.comm_buf_len<resultlength){
+		strncpy(result, (char*)gsm.comm_buf,gsm.comm_buf_len-1);
+		result[gsm.comm_buf_len]='\0';
+		return gsm.comm_buf_len;
+	}
+	else{
+		
+		strncpy(result, (char*)gsm.comm_buf,resultlength-1);
+		result[resultlength-1]='\0';
+		return resultlength-1;
+	}
 }
 
 char *SIMCOM900::getAllCellInfo(char *res,int length)

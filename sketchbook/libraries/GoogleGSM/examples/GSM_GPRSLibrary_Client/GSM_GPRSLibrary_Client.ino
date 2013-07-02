@@ -25,11 +25,11 @@ boolean started=false;
 void setup() 
 {
   //Serial connection.
-  Serial.begin(9600);
-  Serial.println("GSM Shield testing.");
+  Serial.begin(4800);
+  Serial.println("GSM Shield testing.3");
   //Start configuration of shield with baudrate.
   //For http uses is raccomanded to use 4800 or slower.
-  if (gsm.begin(2400)){
+  if (gsm.begin(4800)){
     Serial.println("\nstatus=READY");
     started=true;  
   }
@@ -38,7 +38,7 @@ void setup()
   if(started){
     //GPRS attach, put in order APN, username and password.
     //If no needed auth let them blank.
-    if (inet.attachGPRS("internet.wind", "", ""))
+    if (inet.attachGPRS("cmnet", "", ""))
       Serial.println("status=ATTACHED");
     else Serial.println("status=ERROR");
     delay(1000);
@@ -51,12 +51,14 @@ void setup()
   
     //TCP Client GET, send a GET request to the server and
     //save the reply.
-    numdata=inet.httpGET("www.google.com", 80, "/", msg, 50);
+    numdata=inet.httpGET("www.baidu.com", 80, "/", msg, 50);
     //Print the results.
     Serial.println("\nNumber of data received:");
     Serial.println(numdata);  
     Serial.println("\nData received:"); 
-    Serial.println(msg); 
+    //Serial.println(msg); 
+    msg[49]='\0';
+    debug("zhous result:",msg);
   }
 };
 
@@ -64,11 +66,19 @@ void loop()
 {
   //Read for new byte on serial hardware,
   //and write them on NewSoftSerial.
-  serialhwread();
+  //serialhwread();
   //Read for new byte on NewSoftSerial.
-  serialswread();
+  //serialswread();
 };
 
+void debug(const char *tag, const char *str)
+{
+       Serial.print(tag);
+       Serial.print(":  ");
+       Serial.println(str);
+       Serial.flush();
+       delay(500);
+}
 void serialhwread(){
   i=0;
   if (Serial.available() > 0){            
@@ -105,3 +115,4 @@ void serialhwread(){
 void serialswread(){
   gsm.SimpleRead();
 }
+

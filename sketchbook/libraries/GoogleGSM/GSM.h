@@ -171,6 +171,7 @@ class GSM
   public:
     enum GSM_st_e { ERROR, IDLE, READY, ATTACHED, TCPSERVERWAIT, TCPCONNECTEDSERVER, TCPCONNECTEDCLIENT };
     byte comm_buf[COMM_BUF_LEN+1];  // communication buffer +1 for 0x00 termination
+    byte comm_buf_len;              // num. of characters in the buffer
     void InitParam (byte group);
 
   private:
@@ -183,7 +184,6 @@ class GSM
     // variables connected with communication buffer
     
     byte *p_comm_buf;               // pointer to the communication buffer
-    byte comm_buf_len;              // num. of characters in the buffer
     byte rx_state;                  // internal state of rx state machine    
     uint16_t start_reception_tmout; // max tmout for starting reception
     uint16_t interchar_tmout;       // previous time in msec.
