@@ -1,0 +1,6 @@
+class SecondTimer
+{
+     SecondTimer();
+     void set(int seconds, void (*f)());
+     void stop();
+}

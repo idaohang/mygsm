@@ -1,0 +1,5 @@
+"C:\Program Files (x86)\Arduino\hardware/tools/avr/bin/avrdude" -C"C:\Program Files (x86)\Arduino\hardware/tools/avr/etc/avrdude.conf" -v -v -v -v -patmega328p -cusbtiny -P usb -b115200 -D -Uflash:w:"C:\Users\zhous\Documents\Arduino\out\eeprom.cpp.hex":i
+"C:\Program Files (x86)\Arduino\hardware/tools/avr/bin/avrdude" -C"C:\Program Files (x86)\Arduino\hardware/tools/avr/etc/avrdude.conf" -v -v -v -v -patmega328p -cusbtiny -P usb -b115200 -D -Ueeprom:w:"C:\Users\zhous\Documents\Arduino\eep_myserver_1m.eep":i
+
+"C:\Program Files (x86)\Arduino\hardware/tools/avr/bin/avrdude" -C"C:\Program Files (x86)\Arduino\hardware/tools/avr/etc/avrdude.conf" -v -v -v -v -patmega328p -cusbtiny -P usb -Uflash:w:C:\Users\zhous\Documents\Arduino\out\eeprom.cpp.hex:i 
+"C:\Program Files (x86)\Arduino\hardware/tools/avr/bin/avrdude" -C"C:\Program Files (x86)\Arduino\hardware/tools/avr/etc/avrdude.conf" -v -v -v -v -patmega328p -cusbtiny -P usb -Ueeprom:w:"C:\Users\zhous\Documents\Arduino\eep_myserver_5m_new.eep":i
