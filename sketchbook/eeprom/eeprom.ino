@@ -19,6 +19,9 @@
 //#pragma data:eeprom        
 //unsigned char table[]= {35,95,45,4,0x01};//eep_read.eep
 unsigned char table[]= {35,95,45,45,0x05};//eep_read.eep
+unsigned char bamin = 10;
+unsigned char yemin = 10;
+unsigned char bachk = 0;
 char *id = "00006";
 //char *center = "13715125676";
 //char *svr = "120.31.134.57";
@@ -65,6 +68,10 @@ void setup()
   eeprom_write_byte((unsigned char *)EEPROM_SVRPORT_ADDR, port.data[0]);
   eeprom_write_byte((unsigned char *)(EEPROM_SVRPORT_ADDR+1), port.data[1]);
   
+  eeprom_write_byte((unsigned char *)EEPROM_BA_ADDR, bamin);
+  eeprom_write_byte((unsigned char *)EEPROM_YE_ADDR, yemin);
+  eeprom_write_byte((unsigned char *)EEPROM_BACHK_ADDR, bachk);
+  
   for(int i=0;i<strlen(id);i++){
     eeprom_write_byte((unsigned char *)(EEPROM_ID_ADDR+i),id[i]);
   }
@@ -101,6 +108,16 @@ void setup()
   Serial.print("port:");
   Serial.print(temp.port);
   Serial.println();
+
+  Serial.print("Battery min value:");
+  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_BA_ADDR);
+
+  
+  Serial.print("Balance min value:");
+  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_YE_ADDR);
+  
+  Serial.print("Battery check value:");
+  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_BACHK_ADDR);
     
   char *p,re[50];
   int addr=EEPROM_ID_ADDR;
