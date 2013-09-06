@@ -217,6 +217,10 @@ char stat;
   //stat=getStat();
   //if (stat == 2 || stat == 3){
     GSM_getPar(lon,lat,alt,time,vel);
+    strcat(result,",Lon:");
+    strcat(result,lon);
+    strcat(result,",Lat:");
+    strcat(result,lat);
 
   #ifdef HAVESENSOR
  ADXL335read();
