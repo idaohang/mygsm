@@ -561,36 +561,47 @@ void GSM_SetCommLineStatus(byte new_status) {comm_line_status = new_status;}
 		  return ;
   }
 
-  char *GSM_getAllCellInfo(char *res,int length)
+  char *GSM_getAllCellInfo(char *res,int length, int flag)
 {
 	char *p_char; 
 	char *p_char1;
 	if (GSM_getStatus()==IDLE)
     return 0;
-    if(AT_RESP_OK != GSM_SendATCmdWaitResp(F("AT+CENG?"), 2000, 1000, "+CENG", 2))
+    if(AT_RESP_OK != GSM_SendATCmdWaitResp(F("AT+CENG?"), 5000, 1500, "+CENG", 2))
 		  return 0;
-	p_char=strstr((char *)(comm_buf),"+CENG:0,");
+	
+    for(int j=0;j<6;j++)
+    {       
+	char str[10];
+	sprintf(str,"%s%d,","+CENG:",j);
+	p_char=strstr((char *)(comm_buf),str);//"+CENG:0,");
 	//Serial.println(p_char);
 	//SimpleWriteln(p_char),
 	p_char1=p_char+8;	
 	p_char = strchr((char *)(p_char1), ',');
 	if (p_char != NULL) {
-          *p_char = 0; 
+          //*p_char = 0; 
 		//strcpy(cellid, (char *)(p_char1));	
 		//SimpleWriteln(p_char1);
-		strcpy(res,(char *)(p_char1));
+		//strcpy(res,(char *)(p_char1));
+	  strncat(res,(char *)(p_char1),p_char-p_char1);
 	   // return true;
-    }
+	}
 	for(int i=0;i<3;i++){
 	    strcat(res,"-");
 		p_char1=p_char+1;
 		p_char = strchr((char*)p_char1,',');
 		if (p_char != NULL){
-			*p_char = 0;
+			//*p_char = 0;
 			//SimpleWriteln(p_char1);
-			strcat(res, (char *)(p_char1));
+			strncat(res, (char *)(p_char1),p_char-p_char1);
 		}
 	}
+	if (!flag)
+	  break;
+	if (j<5)
+	strcat(res,",");
+    }
 	//Serial.println(res);
 
 	//SimpleWriteln(F("AT+CENG=0,0")); 

@@ -4,6 +4,7 @@
 
 //#define HAVESENSOR
 //#define READEEPROM
+//#define SMSTEST
 
 #define DHT11PIN 7
 #define SWITCHPIN 2
@@ -22,6 +23,8 @@
 #define CHK_HU_BIT 0x04
 #define CHK_X_BIT 0x08
 #define CHK_Y_BIT 0x10
+#define CHK_YE_BIT 0x20
+#define CHK_BA_BIT 0x40
 
 
 #ifdef READEEPROM
@@ -32,6 +35,9 @@
 #define EEPROM_Y_ADDR 3
 #define EEPROM_RT_ADDR 4
 #define EEPROM_SVRPORT_ADDR 5
+#define EEPROM_BA_ADDR 7
+#define EEPROM_YE_ADDR 8
+#define EEPROM_BACHK_ADDR 9
 #define EEPROM_ID_ADDR 10
 #define EEPROM_AC_ADDR 20
 #define EEPROM_SVR_ADDR 40
@@ -54,6 +60,9 @@ boolean check_permit_switch = false;
 unsigned long check_permit_switch_timeout = 0;
 unsigned long check_permit_switch_prevtime = 0;
 
+unsigned long check_balance_timeout = 0;
+unsigned long check_balance_prev = 0;
+
 
 byte check = 0;
 byte bakcheck = 0;
@@ -62,6 +71,8 @@ int tempmax=35;
 int humax = 95;
 int xmax=45;
 int ymax=45;
+byte yemin=10;
+byte bamin=10;
 int reporttime=1;  //minutes
 //int alarmtime=2; //seconds
 
@@ -102,6 +113,50 @@ long getvalue(const char *str)
 		v=strtol(p+1,&pe,10);
 	}
 	return v;
+}
+
+int getvalue1(char *s)
+{
+  int v=0;
+  for(int i=0;i<strlen(s);i++)
+  {
+    int y=i%4;
+    int a,b;
+    if (y==0 ||y==1)
+    {
+      if (s[i] != '0')
+	return -1;
+      continue;
+    }
+    if (y==2)
+    {
+      if (s[i]!= '3')
+	return -1;
+    }
+    if (y==3)
+    {
+      if (s[i]>0x39 || s[i]<0x30)
+	return -1;
+      v=s[i]-0x30+v*10;
+    }
+  }
+  return v;
+}
+
+int getbalance(char *s)
+{
+  char *p1=NULL,*p2=NULL;
+  p1 = strstr_P(s, PSTR("5F53524D5E1062374F59989D"));
+  if (p1==NULL)
+    return -1;
+  p2 = strstr_P(p1, PSTR("002E"));
+  if (p2 == NULL)
+    p2=strstr_P(p1, PSTR("5143"));
+  if (p2 == NULL)
+    return -1;
+  *p2=0;
+  //printf("%s\n",p1);
+  return getvalue1(p1+strlen_P(PSTR("5F53524D5E1062374F59989D")));
 }
 
 int towebcenter(char *server, int port,char *path, char *res)
@@ -154,46 +209,14 @@ char time[20];
 char vel[15];
 char stat;
   //gsm.CellID();
-  if (GSM_getAllCellInfo(cellinfo,20)){
+  cellinfo[0]=0;
+  if (GSM_getAllCellInfo(cellinfo,20,0)){
     strcat(result, ",Cellid:");
     strcat(result,cellinfo);
   }
- /* char lac[5];
-  char ci[5];
-  if (GSM_getLacCi( lac, ci,3)){
-	strcat(result, ",Cellid:");
-	strcat(result,mcc);
-	strcat(result,"-");
-	strcat(result,mnc);
-	strcat(result,"-");
-	strcat(result,lac);
-	strcat(result,"-");
-	strcat(result,ci);
-  }*/
   //stat=getStat();
   //if (stat == 2 || stat == 3){
     GSM_getPar(lon,lat,alt,time,vel);
-   /* strcat(result,",Time:");
-    {
-	    char v = time[9]-0x30;
-	    if (v+8>=10){
-		time[8]=time[8]+1;
-		time[9]=time[9]+8-10;
-	    }
-	    else{
-	    	time[9]=time[9]+8;
-	    }
-    }
-    strcat(result,time);
-    strcat(result,",Lon:");
-    strcat(result,lon);
-    strcat(result,",Lat:");
-    strcat(result,lat);*/
-  //}
-  //else{
-  //  strcat(result,",Lon:0.00");
-  //  strcat(result,",Lat:0.00");
-  //}
 
   #ifdef HAVESENSOR
  ADXL335read();
@@ -316,24 +339,92 @@ int processsms(char *sms)
               	ret = 1;
 		}
 	}
+	else if(0 == strncmp_P(sms, PSTR("007300650074002B00700073003D"),28))
+	{
+                v=getvalue1(sms+28);
+                if (v != -1){
+                	sprintf(sms, "%s%s%d",SETALARMPERIODCMD,"=",v);
+              	check_permit_switch_prevtime = millis();
+              	check_permit_switch_timeout = (unsigned long)v*60*1000;
+              	check_permit_switch = true;
+              	ret = 1;
+		}
+	}
         return ret;
 }
 
-void checkalarm()
+void checkalarm(boolean checkbalance)
 {
-#ifdef HAVESENSOR
- char str[20];
  boolean alarm=false;
+  char perc[5];
+ char str[20];
+ int balance = -1;
 
+ bakcheck = check;
+
+ if (checkbalance){
+ 	balance = getbalance(result);
+  }
+ 
+  strcpy(result,"ism#alarm=");  
+  strcat(result, "ID:");
+  strcat(result,ID);
+
+  if(checkbalance && balance != -1){
+	if (balance<yemin){
+		if (!(check & CHK_YE_BIT)){
+			itoa(balance,str,10);
+			 strcat(result, ",Balance:");
+			 strcat(result,str);
+			 check |= CHK_YE_BIT;
+		 	 alarm=true;
+		}
+	}
+	else{
+		if (check & CHK_YE_BIT){
+			strcat(result, ",Balance:clear");
+			check &= (~CHK_YE_BIT);
+			alarm=true;
+		}
+	}
+  }
+  
+  if (GSM_getBattInf(perc,str)==1){
+	char *pe;
+	int v=0;
+	int v1;
+	v=strtol(perc,&pe,10);
+	if(v!=0){
+		v1=map(v, 25,100, 0,100);
+		if (v1<bamin){
+			if (!(check & CHK_BA_BIT)){
+				itoa(v1,str,10);
+				 strcat(result, ",Battery:");
+				 strcat(result,str);
+				 check |= CHK_BA_BIT;
+#ifdef READEEPROM
+				eeprom_write_byte((unsigned char *)EEPROM_BACHK_ADDR,1);
+#endif
+			 	 alarm=true;
+			}
+		}
+		else{
+			if (check & CHK_BA_BIT){
+				strcat(result, ",Battery:clear");
+				check &= (~CHK_BA_BIT);
+				alarm=true;
+			}
+		}
+	}
+  }
+ 
+#ifdef HAVESENSOR
  if (check_permit_switch ==  true && 
  	(unsigned long)(millis() - check_permit_switch_prevtime) >= check_permit_switch_timeout){
 	check_permit_switch = false;
  }
 
-  bakcheck = check;
-  strcpy(result,"ism#alarm=");  
-  strcat(result, "ID:");
-  strcat(result,ID);
+  //bakcheck = check;
   if (digitalRead(SWITCHPIN)==HIGH){
 	  if (check_permit_switch == false ){
 	  	if (!(check & CHK_SWH_BIT)){
@@ -417,6 +508,8 @@ void checkalarm()
 		alarm=true;
 	}
  }
+#endif
+ 
  if (alarm){
  	if (1!=GSM_SendSMS(DEFAULTAC, result))
   	{
@@ -424,9 +517,8 @@ void checkalarm()
           //GSM_WhileSimpleRead();
           check = bakcheck;
   	}
+  	 result[0]=0;
  }
-
-#endif
 }
 
 void setup() 
@@ -446,8 +538,17 @@ void setup()
 	reporttime = eeprom_read_byte((unsigned char *)EEPROM_RT_ADDR);
 	uni_port.data[0] = eeprom_read_byte((unsigned char *)EEPROM_SVRPORT_ADDR);
   	uni_port.data[1] = eeprom_read_byte((unsigned char *)(EEPROM_SVRPORT_ADDR+1));
-  	sprintf(result, "T:%d,H:%d,X:%d,Y:%d,RT:%d,P:%d",tempmax,humax,xmax,ymax,reporttime,DEFAULTSVRPORT);
+  	sprintf(result, "T:%d,H:%d,X:%d,Y:%d,RT:%d,P:%d",tempmax,humax,xmax,ymax,reporttime,DEFAULTSVRPORT);	
   	Serial.println(result);
+	bamin = eeprom_read_byte((unsigned char *)EEPROM_BA_ADDR);	
+	yemin = eeprom_read_byte((unsigned char *)EEPROM_YE_ADDR);	
+	bachk = eeprom_read_byte((unsigned char *)EEPROM_BACHK_ADDR);	
+	sprintf(result, "Battery min:%d,Balance min:%d,Battery check value:%d",bamin,yemin,bachk);
+	Serial.println(result);
+	 result[0]=0;
+	if(bachk == 1){
+		 check |= CHK_BA_BIT;
+	}
   	read_eeprom_str(ID,EEPROM_ID_ADDR);
   	Serial.print(F("ID:"));
   	Serial.println(ID);
@@ -460,8 +561,6 @@ void setup()
   	read_eeprom_str(DEFAULTSVRPATH,EEPROM_SVRPATH_ADDR);
   	Serial.print(F("Server path:"));
   	Serial.println(DEFAULTSVRPATH);
-  	//sprintf(result, "T:%d,H:%d,X:%d,Y:%d,RT:%d,P:%d,ID:%s,AC:%s,SVR:%s,SVRP:%s",tempmax,humax,xmax,ymax,reporttime,DEFAULTSVRPORT,ID,DEFAULTAC,DEFAULTSVRADDR,DEFAULTSVRPATH);
-  	//Serial.println(result);
   	delay(1000);
 #else
 	strcpy(ID, "00001");
@@ -502,21 +601,113 @@ void setup()
   //GSM_getCellMccMnc( mcc,mnc);
   GSM_engmode();
   delay(1000);
+  GSM_SendSMS("10086","YE");
+  check_balance_prev = millis();
+  check_balance_timeout = 60*60*1000;
+  delay(1000);
 }
-
+#if 1
 void loop() 
 {
   if(started){
-	checkalarm();  
+	checkalarm(false);  
         if (reporton)
         {
           reporton=false; 
            report();           
         }
+
+        if ((unsigned long)(millis() - check_balance_prev) >= check_balance_timeout){
+        	 check_balance_prev = millis();
+		GSM_SendSMS("10086","YE");
+        }
         
         char position;
         char phone_num[20]; // array for the phone number string
-        char sms_text[100]; // array for the SMS text string
+        char sms_text[101]; // array for the SMS text string
+        char ret = -5;
+
+        position = GSM_IsSMSPresent(SMS_UNREAD);
+        if (position) {
+          GSM_GetSMS(position, phone_num, sms_text, 100);
+         if (1 !=  (ret = GSM_DeleteSMS(position)))
+         {
+             //Serial.print(F("DeleteSMS return:"));
+             //Serial.print(ret);
+             //Serial.flush();
+             delay(500);
+         }
+#ifdef SMSTEST
+         Serial.println(sms_text);
+         Serial.println(strlen(sms_text));
+         byte *p = (byte*)sms_text;
+         for(int i =0;i<strlen(sms_text);i++,p++)
+        { Serial.print(*p);Serial.print("-");}
+         Serial.println("end");
+         GSM_WhileSimpleRead();
+#endif
+         if (1 == processsms(sms_text))
+          {
+            strcpy(result,sms_text);
+            strcat(result," OK");
+            if (1!=GSM_SendSMS(phone_num,result))
+            {
+                  //debug("ERROR","SendSMS fail");
+            }
+             result[0]=0;
+          }
+          else{
+          	   if (0==strcmp_P(phone_num, PSTR("10086"))){
+          	   	if ( NULL != strstr_P(sms_text, PSTR("5F53524D5E1062374F59989D"))){
+				strcpy(result, sms_text);
+				checkalarm(true);
+			}
+          	   }
+          	   if (0!=strncmp(phone_num, "10",2) ||(0==strcmp(phone_num,DEFAULTAC)))
+	          {
+	          	char tag[10];
+	          	if (0==strcmp(phone_num,DEFAULTAC))
+	          	{
+	          		if (0 == strncasecmp_P(sms_text, PSTR("get ncell"), 9)){
+	          			strcpy_P(result, PSTR("ism#get ncell="));
+					if (0 == GSM_getAllCellInfo(result, 200, 1)){
+						result[0]=0;
+					}
+	          		}else{
+					strcpy_P(tag, PSTR("ism#get "));
+					getresult(tag);
+				}
+	          	}
+	          	else{
+	          		if (0 == strncasecmp_P(sms_text, PSTR("get ncell"), 9)){
+	          			strcpy_P(result, PSTR("get ncell="));
+					if (0 == GSM_getAllCellInfo(result, 200, 1)){
+						result[0]=0;
+					}
+	          		}else{
+		          		strcpy_P(tag, PSTR("get "));
+		          		getresult(tag);
+	          		}
+	          	}
+	          	 if (strlen(result))
+	          	 {
+	                	GSM_SendSMS(phone_num,result);
+	                }
+	                result[0]=0;
+	          } 
+          }
+        }
+    //delay(alarmtime*1000);
+    delay(200);
+    //delay(5000);
+  }
+}
+#else
+void loop()
+{
+	char position;
+        char phone_num[20]; // array for the phone number string
+        char sms_text[101]; // array for the SMS text string
         char ret = -5;
 
         position = GSM_IsSMSPresent(SMS_UNREAD);
@@ -530,42 +721,27 @@ void loop()
              delay(500);
          }
          Serial.println(sms_text);
+         Serial.println(strlen(sms_text));
+         byte *p = (byte*)sms_text;
+         for(int i =0;i<strlen(sms_text);i++,p++)
+        { Serial.print(*p);Serial.print("-");}
+         Serial.println("end");
          GSM_WhileSimpleRead();
-         if (1 == processsms(sms_text))
-          {
-            strcpy(result,sms_text);
-            strcat(result," OK");
-            if (1!=GSM_SendSMS(phone_num,result))
-            {
-                  debug("ERROR","SendSMS fail");
-            }
-          }
-          else{
-          	   if (0!=strncmp(phone_num, "10",2) ||(0==strcmp(phone_num,DEFAULTAC)) )//{
-
-          	   //}
-	          //else
-	          {
-	          	char tag[10];
-	          	if (0==strcmp(phone_num,DEFAULTAC))
-	          	{
-				strcpy(tag, "ism#get ");
-	          	}
-	          	else
-	          		strcpy(tag, "get ");
-	          	 if (1!=GSM_SendSMS(phone_num,getresult(tag)))
-	          	 {
-	                	//debug("ERROR","SendSMS fail");
-	                }
-	          } 
-          }
-        }
-    //delay(alarmtime*1000);
-    delay(200);
-    //delay(5000);
-  }
+          if (0==strcmp_P(phone_num, PSTR("10086")) ){
+          Serial.println("1111111111111111");
+          	if(NULL != strstr_P(sms_text, PSTR("5F53524D5E1062374F59989D"))){
+          		strcpy(result, sms_text);
+			int balance = getbalance(result);
+			Serial.println("2222222222");
+			Serial.println(balance);
+          	   }
+         }
+         GSM_WhileSimpleRead();
+         delay(1000);
+         }
 }
 
+#endif
 /*
 
 void loop()
