@@ -2,8 +2,8 @@
 #include <MinuteTimer.h>
 #include "gsm.h"
 
-//#define HAVESENSOR
-//#define READEEPROM
+#define HAVESENSOR
+#define READEEPROM
 //#define SMSTEST
 
 #define DHT11PIN 7
@@ -63,9 +63,13 @@ unsigned long check_permit_switch_prevtime = 0;
 unsigned long check_balance_timeout = 0;
 unsigned long check_balance_prev = 0;
 
+unsigned long check_battery_timeout = 0;
+unsigned long check_battery_prev = 0;
+
 
 byte check = 0;
 byte bakcheck = 0;
+unsigned char bachk = 0;
 
 int tempmax=35;
 int humax = 95;
@@ -75,6 +79,10 @@ byte yemin=10;
 byte bamin=10;
 int reporttime=1;  //minutes
 //int alarmtime=2; //seconds
+
+int balance = -1;
+int battery = -1;
+
 
 
 dht11 dht(DHT11PIN);
@@ -222,14 +230,26 @@ char stat;
     strcat(result,",Lat:");
     strcat(result,lat);
 
+    strcat(result, "Balance:");
+    str[0]=0;
+    itoa(balance,str,10);
+    strcat(result, str);
+
+    strcat(result, "Battery:");
+    str[0]=0;
+    itoa(battery,str,10);
+    strcat(result,str);
+
   #ifdef HAVESENSOR
  ADXL335read();
  int xang = abs(ADXL335xAng());
  int yang = abs(ADXL335yAng());
+ str[0]=0;
  itoa(xang,str,10);
  strcat(result, ",XAngle:");
  strcat(result,str);
  strcat(result,",YAngle:");
+ str[0]=0;
  itoa(yang,str,10);
  strcat(result,str);
  
@@ -362,7 +382,7 @@ void checkalarm(boolean checkbalance)
  boolean alarm=false;
   char perc[5];
  char str[20];
- int balance = -1;
+// int balance = -1;
 
  bakcheck = check;
 
@@ -392,36 +412,42 @@ void checkalarm(boolean checkbalance)
 		}
 	}
   }
-  
-  if (GSM_getBattInf(perc,str)==1){
-	char *pe;
-	int v=0;
-	int v1;
-	v=strtol(perc,&pe,10);
-	if(v!=0){
-		v1=map(v, 25,100, 0,100);
-		if (v1<bamin){
-			if (!(check & CHK_BA_BIT)){
-				itoa(v1,str,10);
-				 strcat(result, ",Battery:");
-				 strcat(result,str);
-				 check |= CHK_BA_BIT;
+
+  if ((unsigned long)(millis() - check_battery_prev) >= check_battery_timeout){
+        	check_battery_prev = millis();
+		if (GSM_getBattInf(perc,str)==1){
+			char *pe;
+			int v=0;
+			int v1;
+			v=strtol(perc,&pe,10);
+			if(v!=0){
+				v1=map(v, 25,100, 0,100);
+				battery = v1;
+				if (v1<bamin){
+					if (!(check & CHK_BA_BIT)){
+						itoa(v1,str,10);
+						 strcat(result, ",Battery:");
+						 strcat(result,str);
+						 check |= CHK_BA_BIT;
 #ifdef READEEPROM
-				eeprom_write_byte((unsigned char *)EEPROM_BACHK_ADDR,1);
+						eeprom_write_byte((unsigned char *)EEPROM_BACHK_ADDR,1);
 #endif
-			 	 alarm=true;
+					 	 alarm=true;
+					}
+				}
+				else{
+					if (check & CHK_BA_BIT){
+						strcat(result, ",Battery:clear");
+						check &= (~CHK_BA_BIT);
+						alarm=true;
+					}
+				}
 			}
-		}
-		else{
-			if (check & CHK_BA_BIT){
-				strcat(result, ",Battery:clear");
-				check &= (~CHK_BA_BIT);
-				alarm=true;
-			}
-		}
-	}
-  }
- 
+		  }
+		 
+        }
+  
+  
 #ifdef HAVESENSOR
  if (check_permit_switch ==  true && 
  	(unsigned long)(millis() - check_permit_switch_prevtime) >= check_permit_switch_timeout){
@@ -531,7 +557,7 @@ void setup()
   //Serial connection.
   Serial.begin(9600);
   //delay(1000);
-  Serial.println("GSM Shield testing v17");
+  Serial.println("GSM Shield testing v18");
   delay(1000);
 #ifdef READEEPROM
   	Serial.println(F("Read EEPROM:"));
@@ -608,6 +634,8 @@ void setup()
   GSM_SendSMS("10086","YE");
   check_balance_prev = millis();
   check_balance_timeout = 60*60*1000;
+  check_battery_prev = millis();
+  check_battery_timeout = 60*60*1000;
   delay(1000);
 }
 #if 1
