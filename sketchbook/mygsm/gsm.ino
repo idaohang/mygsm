@@ -570,7 +570,7 @@ void GSM_SetCommLineStatus(byte new_status) {comm_line_status = new_status;}
     if(AT_RESP_OK != GSM_SendATCmdWaitResp(F("AT+CENG?"), 5000, 1500, "+CENG", 2))
 		  return 0;
 	
-    for(int j=0;j<6;j++)
+    for(int j=0;j<5;j++)
     {       
 	char str[10];
 	sprintf(str,"%s%d,","+CENG:",j);
@@ -599,7 +599,7 @@ void GSM_SetCommLineStatus(byte new_status) {comm_line_status = new_status;}
 	}
 	if (!flag)
 	  break;
-	if (j<5)
+	if (j<4)
 	strcat(res,",");
     }
 	//Serial.println(res);

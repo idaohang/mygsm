@@ -110,14 +110,14 @@ void setup()
   Serial.println();
 
   Serial.print("Battery min value:");
-  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_BA_ADDR);
+  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_BA_ADDR));
 
   
   Serial.print("Balance min value:");
-  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_YE_ADDR);
+  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_YE_ADDR));
   
   Serial.print("Battery check value:");
-  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_BACHK_ADDR);
+  Serial.print(eeprom_read_byte((unsigned char *)EEPROM_BACHK_ADDR));
     
   char *p,re[50];
   int addr=EEPROM_ID_ADDR;

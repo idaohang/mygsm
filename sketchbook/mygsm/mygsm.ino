@@ -231,12 +231,12 @@ char stat;
     strcat(result,",Lat:");
     strcat(result,lat);
 
-    strcat(result, "Balance:");
+    strcat(result, ",Balance:");
     str[0]=0;
     itoa(balance,str,10);
     strcat(result, str);
 
-    strcat(result, "Battery:");
+    strcat(result, ",Battery:");
     str[0]=0;
     itoa(battery,str,10);
     strcat(result,str);
@@ -442,6 +442,9 @@ void checkalarm(boolean checkbalance)
 					if (check & CHK_BA_BIT){
 						strcat(result, ",Battery:clear");
 						check &= (~CHK_BA_BIT);
+#ifdef READEEPROM
+						eeprom_write_byte((unsigned char *)EEPROM_BACHK_ADDR,0);
+#endif
 						alarm=true;
 					}
 				}
