@@ -65,6 +65,7 @@ unsigned long check_balance_prev = 0;
 
 unsigned long check_battery_timeout = 0;
 unsigned long check_battery_prev = 0;
+boolean first_check_battery = false;
 
 
 byte check = 0;
@@ -413,7 +414,9 @@ void checkalarm(boolean checkbalance)
 	}
   }
 
-  if ((unsigned long)(millis() - check_battery_prev) >= check_battery_timeout){
+  if ((unsigned long)(millis() - check_battery_prev) >= check_battery_timeout||first_check_battery){
+  		if (first_check_battery)
+  			first_check_battery = false;
         	check_battery_prev = millis();
 		if (GSM_getBattInf(perc,str)==1){
 			char *pe;
@@ -636,6 +639,7 @@ void setup()
   check_balance_timeout = 60*60*1000;
   check_battery_prev = millis();
   check_battery_timeout = 60*60*1000;
+  first_check_battery = true;
   delay(1000);
 }
 #if 1
