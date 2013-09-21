@@ -27,7 +27,7 @@
 int GSM_begin(long baud_rate){
 	int response=-1;
 	int cont=0;
-	boolean norep=false;
+	boolean norep=true;
 	boolean turnedON=false;
 	GSM_SetCommLineStatus(CLS_ATCMD);
 	
@@ -44,7 +44,7 @@ int GSM_begin(long baud_rate){
 	
 	
 	for (cont=0; cont<3; cont++){
-		if (AT_RESP_ERR_NO_RESP == GSM_SendATCmdWaitResp(F("AT"), 2500, 500, "OK", 5)&&!turnedON) {		//check power
+		if (AT_RESP_OK != GSM_SendATCmdWaitResp(F("AT"), 2500, 1500, "OK", 5)&&!turnedON) {		//check power
 	    // there is no response => turn on the module
 			#ifdef DEBUG_ON
 				Serial.println("DB:NO RESP");
