@@ -421,14 +421,14 @@ void checkalarm(boolean checkbalance)
 		if (GSM_getBattInf(perc,str)==1){
 			char *pe;
 			int v=0;
-			int v1;
+			//int v1;
 			v=strtol(perc,&pe,10);
 			if(v!=0){
-				v1=map(v, 25,100, 0,100);
-				battery = v1;
-				if (v1<bamin){
+				//v1=map(v, 25,100, 0,100);
+				battery = v;
+				if (battery<bamin){
 					if (!(check & CHK_BA_BIT)){
-						itoa(v1,str,10);
+						itoa(battery,str,10);
 						 strcat(result, ",Battery:");
 						 strcat(result,str);
 						 check |= CHK_BA_BIT;
@@ -639,9 +639,9 @@ void setup()
   delay(1000);
   GSM_SendSMS("10086","YE");
   check_balance_prev = millis();
-  check_balance_timeout = 60*60*1000;
+  check_balance_timeout = (unsigned long)60*60*1000;
   check_battery_prev = millis();
-  check_battery_timeout = 60*60*1000;
+  check_battery_timeout = (unsigned long)15*60*1000;
   first_check_battery = true;
   delay(1000);
 }
